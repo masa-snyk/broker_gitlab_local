@@ -9,12 +9,20 @@ set -x
 #		exit 1
 #fi
 
-GITLAB_HOME=${HOME}/demo/broker/broker_gitlab_local/volume
+#IP_ADDR=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -1)
+IP_ADDR=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
+
+GITLAB_HOME=${PWD}/volume
+
+mkdir -p ${GITLAB_HOME}
+
+DOCKER_NETWORK=mySnykBrokerNetwork
 
 sudo docker run --detach \
-	--hostname gitlab.local \
+	--hostname gitlab.test \
 	--publish 443:443 --publish 80:80 \
 	--privileged \
+	--network ${DOCKER_NETWORK} \
 	--restart always \
 	--name gitlab \
 	--volume ${GITLAB_HOME}/config:/etc/gitlab \
