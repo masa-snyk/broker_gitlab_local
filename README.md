@@ -53,12 +53,15 @@ mkcert gitlab.test localhost 127.0.0.1
 
 ## Create 2 containers
 
+(Contents of `1.create_containers.sh`)
+
 ```shell
 #!/bin/bash
 
 set -x
 
-### Config ===================
+### ===================
+### Config
 
 DOCKER_NETWORK=mySnykBrokerNetwork
 
@@ -75,10 +78,7 @@ BROKER_URL=http://${BROKER_HOST}:${BROKER_PUBLISH_PORT}
 ACCEPT_JSON_PATH=${PWD}
 
 ### ==========================
-
 ### Create container for GitLab
-
-(Contents of `1.create_containers.sh`)
 
 mkdir -p ${GITLAB_HOME}
 
