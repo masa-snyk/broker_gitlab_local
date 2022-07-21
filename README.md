@@ -8,7 +8,7 @@ Snyk broker proxies the connection between local GitLab and Snyk platform.
 
 You need local DNS server (or /etc/hosts) and CA for issuing locally trusted certificate for HTTPS.
 
-#### Local DNS server
+### Local DNS server
 
 Host name resolution could be done by ediding /etc/hosts, but it always nice to have your own local DNS server ;-)
 Below is example to resolve `*.test` as a local loopback address.
@@ -36,9 +36,9 @@ ping gitlab.test
 It should route to localhost.
 
 
-#### Local CA
+### Local CA
 
-You need locally trusted cert for GitLab server.
+You need locally trusted TLS cert for GitLab server.
 
 ```shell
 brew install mkcert
@@ -122,6 +122,58 @@ docker run -d \
 
 Reference: [https://docs.gitlab.com/omnibus/settings/nginx.html#manually-configuring-https](https://docs.gitlab.com/omnibus/settings/nginx.html#manually-configuring-https)
 
+
+### Edit config file
+
+Uncomment the line with `exeternal_url` in `volume/config/gitlab.rb`.
+Or you can log in to your container and edit `/etc/gitlab/ssl`.
+```
+external_url "https://masa.gitlab.test"
+```
+And, disable Let's encrypt section in `gitlab.rb`.
+```
+letsencrypt['enable'] = false
+```
+
+### Issue TLS cert and private key
+
+Run following:
+
+(contents of `3.issue_certs.sh`)
+
+```
+#!/bin/bash
+
+set -x
+
+SSL_PATH=${PWD}/volume/config/ssl
+HOST_NAME=masa.gitlab.test
+
+mkdir -p ${SSL_PATH}
+chmod 755 ${SSL_PATH}
+
+mkcert \
+	-cert-file ${SSL_PATH}/${HOST_NAME}.crt \
+	-key-file ${SSL_PATH}/${HOST_NAME}.key \
+	${HOST_NAME}
+```
+
+### Restart GitLab & Nginx
+
+Run following to restart GitLab to take new configuration.
+```
+docker exec -u root gitlab gitlab-ctl reconfigure
+```
+
+Run following to restart Nginx to take new TLS certs.
+```
+docker exec -u root gitlab gitlab-ctl hup nginx registry
+```
+
+Then access local gitlab UI from your browser, and you should see the HTTPS connection is now safe.
+```
+open https://masa.gitlab.test
+```
 
 
 ## ToDos
