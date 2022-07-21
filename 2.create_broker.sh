@@ -7,7 +7,7 @@ set -x
 
 DOCKER_NETWORK=mySnykBrokerNetwork
 
-GITLAB_HOST=masa.gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
+GITLAB_HOST=gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
 GITLAB_TOKEN=y9TnMfa7v65Qcvk8mZum # Replace this with actual Gitlab token
 
 BROKER_CONTAINER_NAME=broker
@@ -23,11 +23,11 @@ ACCEPT_JSON_PATH=${PWD}
 ### ==========================
 ### Create container for Broker
 
-#	--network ${DOCKER_NETWORK} \
 
 docker run -d \
 	--restart=always \
 	--name ${BROKER_CONTAINER_NAME} \
+	--network ${DOCKER_NETWORK} \
 	-p ${BROKER_PUBLISH_PORT}:${BROKER_PUBLISH_PORT} \
 	-v ${ACCEPT_JSON_PATH}:/private \
 	-e BROKER_TOKEN=${BROKER_TOKEN} \

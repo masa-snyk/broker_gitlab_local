@@ -4,9 +4,16 @@ Snyk Broker set up for locally running GitLab.
 This demo locally runs 2 containers, GitLab and Snyk Broker.
 Snyk broker proxies the connection between local GitLab and Snyk platform.
 
-## Pre-requisite
+## 0. Prerequisite
 
 You need local DNS server (or /etc/hosts) and CA for issuing locally trusted certificate for HTTPS.
+
+### Docker network
+
+Create docker network.
+```
+docker network create mySnykBrokerNetwork
+ ```
 
 ### Local DNS server
 
@@ -35,7 +42,6 @@ ping gitlab.test
 
 It should route to localhost.
 
-
 ### Local CA
 
 You need locally trusted TLS cert for GitLab server.
@@ -51,9 +57,15 @@ If you want to issue a cert for multiple SANS, try:
 mkcert gitlab.test localhost 127.0.0.1
 ```
 
-## Create 2 containers
+## 1. Set up GitLab locally
 
-(Contents of `1.create_containers.sh`)
+Now, fire up GitLab.
+For the first time to create GitLab container, it takes ~10 minutes (Download the image, Initializing the DB, etc).
+After initial boot up is done, 
+
+For this demo, the hostname of GitLab is `gitlab.test`. You can freely change the name, but make sure you also changes the hostnane in scripts.
+
+Run following or execute `1.create_containers.sh`.
 
 ```shell
 #!/bin/bash
@@ -67,18 +79,18 @@ DOCKER_NETWORK=mySnykBrokerNetwork
 
 GITLAB_CONTAINER_NAME=gitlab
 GITLAB_HOME=${PWD}/volume
-GITLAB_HOST=masa.gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
-GITLAB_TOKEN=y9TnMfa7v65Qcvk8mZum
+GITLAB_HOST=gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
 
-BROKER_CONTAINER_NAME=broker
-BROKER_TOKEN=$(cat broker_token)
-BROKER_PUBLISH_PORT=8000
+### Prerequites
+SSL_PATH=${GITLAB_HOME}/volume/config/ssl
 
-### =======================
+mkdir -p ${SSL_PATH}
+chmod 755 ${SSL_PATH}
 
-BROKER_HOST=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
-BROKER_URL=http://${BROKER_HOST}:${BROKER_PUBLISH_PORT}
-ACCEPT_JSON_PATH=${PWD}
+mkcert \
+	-cert-file ${SSL_PATH}/${GITLAB_HOST}.crt \
+	-key-file ${SSL_PATH}/${GITLAB_HOST}.key \
+	${GITLAB_HOST}
 
 ### ==========================
 ### Create container for GitLab
@@ -95,9 +107,64 @@ docker run -d \
 	-v ${GITLAB_HOME}/config:/etc/gitlab \
 	-v ${GITLAB_HOME}/logs:/var/log/gitlab \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
+	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false;" \
 	yrzr/gitlab-ce-arm64v8
+```
 
-### ============================
+***Note***: For the first time you create GitLab container, it will also initialise databases and various sub-systems So takes time... (~10min)
+
+## 2. Obtain initial root password
+
+Once GitLab is up, you can retrieve initial root password.
+```
+docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
+```
+
+Log in to GitLab, then create an access token. 
+Creating non-root user is optional.
+
+## 3. Create access token
+
+Once you login, go to user menu on upper right corner.
+Then, preference -> Access Token -> Generate new like below
+
+<image src="./asset/access_token.png">
+
+## 4. Fire up Broker with access token & broker token
+
+You need two kind of tokens. 
+1. Broker token (To auth Broker <-> Snyk Platform)
+   * [Generate credentials for Snyk Broker](https://docs.snyk.io/features/snyk-broker/set-up-snyk-broker/prepare-snyk-broker-for-deployment#generate-credentials-in-the-target-application-for-snyk-broker)
+
+2. GitLab access token (To auth Broker <-> GitLab)
+   * This is the token generated in Step 3.
+
+Edit `GITLAB_TOKEN` and `BROKER_TOKEN` in a script `2.create_broker.sh` and run.
+
+```
+#!/bin/bash
+
+set -x
+
+### =======================
+### Config
+
+DOCKER_NETWORK=mySnykBrokerNetwork
+
+GITLAB_HOST=gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
+GITLAB_TOKEN=y9TnMfa7v65Qcvk8mZum # Replace this with actual Gitlab token
+
+BROKER_CONTAINER_NAME=broker
+BROKER_TOKEN=$(cat broker_token) # Replace this with actual Broker token
+BROKER_PUBLISH_PORT=8000
+
+### =======================
+
+BROKER_HOST=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
+BROKER_URL=http://${BROKER_HOST}:${BROKER_PUBLISH_PORT}
+ACCEPT_JSON_PATH=${PWD}
+
+### ==========================
 ### Create container for Broker
 
 docker run -d \
@@ -116,53 +183,19 @@ docker run -d \
 	snyk/broker:gitlab 
 ```
 
-***Note***: For the first time you create GitLab container, it will also initialise databases and various sub-systems So takes time... (~10min)
-
-## Configure HTTPS
-
-Reference: [https://docs.gitlab.com/omnibus/settings/nginx.html#manually-configuring-https](https://docs.gitlab.com/omnibus/settings/nginx.html#manually-configuring-https)
+Once broker fires up, you should be able to retrieve local GitLab repositories from Snyk UI.
 
 
-### Edit config file
+## Additional topics
 
-Uncomment the line with `exeternal_url` in `volume/config/gitlab.rb`.
-Or you can log in to your container and edit `/etc/gitlab/ssl`.
+### Issue new TLS cert and apply
+
+You can issue new TLS cert by:
 ```
-external_url "https://masa.gitlab.test"
-```
-And, disable Let's encrypt section in `gitlab.rb`.
-```
-letsencrypt['enable'] = false
-```
-
-### Issue TLS cert and private key
-
-Run following:
-
-(contents of `3.issue_certs.sh`)
-
-```
-#!/bin/bash
-
-set -x
-
-SSL_PATH=${PWD}/volume/config/ssl
-HOST_NAME=masa.gitlab.test
-
-mkdir -p ${SSL_PATH}
-chmod 755 ${SSL_PATH}
-
 mkcert \
-	-cert-file ${SSL_PATH}/${HOST_NAME}.crt \
-	-key-file ${SSL_PATH}/${HOST_NAME}.key \
-	${HOST_NAME}
-```
-
-### Restart GitLab & Nginx
-
-Run following to restart GitLab to take new configuration.
-```
-docker exec -u root gitlab gitlab-ctl reconfigure
+	-cert-file volume/config/ssl/gitlab.test.crt \
+	-key-file volume/config/ssl/gitlab.test.key \
+	gitlab.test
 ```
 
 Run following to restart Nginx to take new TLS certs.
@@ -170,10 +203,22 @@ Run following to restart Nginx to take new TLS certs.
 docker exec -u root gitlab gitlab-ctl hup nginx registry
 ```
 
-Then access local gitlab UI from your browser, and you should see the HTTPS connection is now safe.
+Then access local gitlab UI from your browser, and you should see the HTTPS connection with new cert.
 ```
 open https://masa.gitlab.test
 ```
+
+### Apply new GitLab configuration
+
+If you modify GitLab config (suchas enabling container registy), run following to restart GitLab to take new configuration.
+```
+docker exec -u root gitlab gitlab-ctl reconfigure
+```
+
+## References
+
+* Configure HTTPS
+	* [https://docs.gitlab.com/omnibus/settings/nginx.html#manually-configuring-https](https://docs.gitlab.com/omnibus/settings/nginx.html#manually-configuring-https)
 
 
 ## ToDos
