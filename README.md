@@ -84,7 +84,7 @@ GITLAB_HOME=${PWD}/volume
 GITLAB_HOST=gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
 
 ### Prerequites
-SSL_PATH=${GITLAB_HOME}/volume/config/ssl
+SSL_PATH=${GITLAB_HOME}/config/ssl
 
 mkdir -p ${SSL_PATH}
 chmod 755 ${SSL_PATH}
