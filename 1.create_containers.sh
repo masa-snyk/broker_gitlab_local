@@ -2,19 +2,23 @@
 
 set -x
 
-### Config ===================
+### =======================
+### Config
 
 DOCKER_NETWORK=mySnykBrokerNetwork
 
 GITLAB_CONTAINER_NAME=gitlab
 GITLAB_HOME=${PWD}/volume
 GITLAB_HOST=masa.gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
-GITLAB_TOKEN=y9TnMfa7v65Qcvk8mZum
+GITLAB_TOKEN=y9TnMfa7v65Qcvk8mZum # Replace this with actual Gitlab token
 
 BROKER_CONTAINER_NAME=broker
-BROKER_HOST=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
-BROKER_TOKEN=xxxxxxx-xxxxx-xxxx-xxxxx
+BROKER_TOKEN=$(cat broker_token) # Replace this with actual Broker token
 BROKER_PUBLISH_PORT=8000
+
+### =======================
+
+BROKER_HOST=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
 BROKER_URL=http://${BROKER_HOST}:${BROKER_PUBLISH_PORT}
 ACCEPT_JSON_PATH=${PWD}
 

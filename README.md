@@ -60,7 +60,7 @@ mkcert gitlab.test localhost 127.0.0.1
 
 set -x
 
-### ===================
+### =======================
 ### Config
 
 DOCKER_NETWORK=mySnykBrokerNetwork
@@ -71,13 +71,17 @@ GITLAB_HOST=masa.gitlab.test  # this name needs to be in SANS of cert. cert name
 GITLAB_TOKEN=y9TnMfa7v65Qcvk8mZum
 
 BROKER_CONTAINER_NAME=broker
-BROKER_HOST=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
-BROKER_TOKEN=xxxxxx-xxxxx-xxxxx-xxxx
+BROKER_TOKEN=$(cat broker_token)
 BROKER_PUBLISH_PORT=8000
+
+### =======================
+
+BROKER_HOST=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
 BROKER_URL=http://${BROKER_HOST}:${BROKER_PUBLISH_PORT}
 ACCEPT_JSON_PATH=${PWD}
 
 ### ==========================
+
 ### Create container for GitLab
 
 mkdir -p ${GITLAB_HOME}
@@ -111,6 +115,8 @@ docker run -d \
 	-e NODE_TLS_REJECT_UNAUTHORIZED=0 \
 	snyk/broker:gitlab 
 ```
+
+***Note***: For the first time you create GitLab container, it will also initialise databases and various sub-systems So takes time... (~10min)
 
 ## Configure HTTPS
 
