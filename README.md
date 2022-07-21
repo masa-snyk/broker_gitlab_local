@@ -81,7 +81,6 @@ BROKER_URL=http://${BROKER_HOST}:${BROKER_PUBLISH_PORT}
 ACCEPT_JSON_PATH=${PWD}
 
 ### ==========================
-
 ### Create container for GitLab
 
 mkdir -p ${GITLAB_HOME}
@@ -98,7 +97,8 @@ docker run -d \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
 	yrzr/gitlab-ce-arm64v8
 
-### Create container for GitLab
+### ============================
+### Create container for Broker
 
 docker run -d \
 	--restart=always \
