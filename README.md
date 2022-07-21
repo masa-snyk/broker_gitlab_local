@@ -65,6 +65,8 @@ After initial boot up is done,
 
 For this demo, the hostname of GitLab is `gitlab.test`. You can freely change the name, but make sure you also changes the hostnane in scripts.
 
+***Note***: **For some reason, officail GitLab image (`gitlab/gitlab-ee:latest`) didn't work with my M1 Mac, so I used GitLab image built for M1 specifically (`yrzr/gitlab-ce-arm64v8`).**
+
 Run following or execute `1.create_containers.sh`.
 
 ```shell
