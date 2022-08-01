@@ -59,6 +59,12 @@ mkcert gitlab.test localhost 127.0.0.1
 
 ## 1. Set up GitLab locally
 
+First, clone this repo.
+
+```
+git clone https://github.com/masa-snyk/broker_gitlab_local.git
+```
+
 Now, fire up GitLab.
 For the first time to create GitLab container, it takes ~10 minutes (Download the image, Initializing the DB, etc).
 After initial boot up is done, 
@@ -144,16 +150,30 @@ Then, preference -> Access Token -> Generate new like below
 
 <image src="./asset/access_token.png">
 
+Copy the token and save it in `gitlab_token` like below:
+
+```
+echo Kh4FS5Xs7ihcQsYsCAFy > gitlab_token
+```
+
 ## 4. Fire up Broker with access token & broker token
 
 You need two kind of tokens. 
 1. Broker token (To auth Broker <-> Snyk Platform)
    * [Generate credentials for Snyk Broker](https://docs.snyk.io/features/snyk-broker/set-up-snyk-broker/prepare-snyk-broker-for-deployment#generate-credentials-in-the-target-application-for-snyk-broker)
 
+	 Copy the token and save it in `broker_token` like below:
+
+	 ```
+	 echo 350a39e2-3e4a-491a-a7ff-eb51ca9e2442 > broker_token
+	 ```
+
 2. GitLab access token (To auth Broker <-> GitLab)
    * This is the token generated in Step 3.
 
-Edit `GITLAB_TOKEN` and `BROKER_TOKEN` in a script `2.create_broker.sh` and run.
+Run the `2.create_broker.sh`.
+
+Below is the conteints of `2.create_broker.sh`.
 
 ```
 #!/bin/bash
