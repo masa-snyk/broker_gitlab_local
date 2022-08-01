@@ -146,9 +146,13 @@ Creating non-root user is optional.
 ## 3. Create access token
 
 Once you login, go to user menu on upper right corner.
-Then, preference -> Access Token -> Generate new like below
+You need 2 scopes:
+* api - For code Broker integration
+* read_registry - For Container scan
 
-<image src="./asset/access_token.png">
+Then, preference -> Access Token -> Generate new like below:
+
+<img src="./asset/access_token.png">
 
 Copy the token and save it in `gitlab_token` like below:
 
