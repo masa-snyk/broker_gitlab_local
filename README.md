@@ -128,7 +128,13 @@ Once GitLab is up, you can retrieve initial root password.
 docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
 ```
 
-Log in to GitLab, then create an access token. 
+Log in to GitLab with `root` as username and the password obtained by previous step:
+
+```
+open https://gitlab.test
+```
+
+Then create an access token. 
 Creating non-root user is optional.
 
 ## 3. Create access token
@@ -193,8 +199,11 @@ docker run -d \
 
 Once broker fires up, you should be able to retrieve local GitLab repositories from Snyk UI.
 
+----
 
 ## Additional topics
+
+---
 
 ### Issue new TLS cert and apply
 
