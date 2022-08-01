@@ -20,7 +20,7 @@ docker network create mySnykBrokerNetwork
 Host name resolution could be done by ediding /etc/hosts, but it always nice to have your own local DNS server ;-)
 Below is example to resolve `*.test` as a local loopback address.
 
-```shell
+```bash
 brew install dnsmasq
 
 # set *.test domain as a local loopback address
@@ -35,7 +35,7 @@ sudo brew services start dnsmasq
 ```
 
 To test if DNS is working, try:
-```
+```console
 ping snyk.test
 ping gitlab.test
 ```
@@ -46,7 +46,7 @@ It should route to localhost.
 
 You need locally trusted TLS cert for GitLab server.
 
-```shell
+```bash
 brew install mkcert
 mkcert -install # Set up local CA and generate CA cert 
 mkcert <hostname> # Generated signed cert for hostname, IP, wildcard, etc
@@ -69,7 +69,7 @@ For this demo, the hostname of GitLab is `gitlab.test`. You can freely change th
 
 Run following or execute `1.create_containers.sh`.
 
-```shell
+```bash
 #!/bin/bash
 
 set -x
@@ -111,6 +111,12 @@ docker run -d \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
 	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false;" \
 	yrzr/gitlab-ce-arm64v8
+```
+
+You can see the progress of installation/set up by:
+
+```
+docker logs -f gitlab
 ```
 
 ***Note***: For the first time you create GitLab container, it will also initialise databases and various sub-systems So takes time... (~10min)
