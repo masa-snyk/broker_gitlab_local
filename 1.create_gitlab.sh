@@ -21,7 +21,7 @@ chmod 755 ${SSL_PATH}
 mkcert \
 	-cert-file ${SSL_PATH}/${GITLAB_HOST}.crt \
 	-key-file ${SSL_PATH}/${GITLAB_HOST}.key \
-	${GITLAB_HOST}
+	${GITLAB_HOST} 
 
 ### ==========================
 ### Create container for GitLab
@@ -39,5 +39,5 @@ docker run -d \
 	-v ${GITLAB_HOME}/config:/etc/gitlab \
 	-v ${GITLAB_HOME}/logs:/var/log/gitlab \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
-	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false;" \
+	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true" \
 	yrzr/gitlab-ce-arm64v8
