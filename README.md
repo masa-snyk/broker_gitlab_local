@@ -419,4 +419,5 @@ docker exec -u root gitlab gitlab-ctl reconfigure
 
 ## ToDos
 
-* [ ] Broker for Container registry and agent
+* [x][2022/08/02] Broker for Container registry and agent
+* [_] Code agent
