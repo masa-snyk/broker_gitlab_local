@@ -4,9 +4,7 @@ Snyk Broker set up for locally running GitLab.
 This demo locally runs GitLab container. 
 
 This demo also sets up Snyk brokers for OSS scan and container scan.
-
-At end of demo, you will have following containers:
-
+	
 * For OSS scan
 	* 1 broker
 
@@ -14,8 +12,24 @@ At end of demo, you will have following containers:
 	* 1 broker
 	* 1 container registry agent
 
+* For Code scan
+	* 1 code agent
+
 Snyk broker proxies the connection between local GitLab and Snyk platform.
 Container registry agent interacts with GitLab container registy.
+
+At end of demo, you will have following containers:
+
+```console
+$ docker  ps
+CONTAINER ID   IMAGE                                  COMMAND                  CREATED         STATUS                 PORTS                                                                      NAMES
+88b7687cc2da   snyk/code-agent                        "docker-entrypoint.s…"   2 minutes ago   Up 2 minutes           0.0.0.0:3000->3000/tcp                                                     code_agent
+a0b57b019bb9   snyk/container-registry-agent:latest   "docker-entrypoint.s…"   7 minutes ago   Up 7 minutes           0.0.0.0:8081->8081/tcp, 17500/tcp                                          cra
+13fea80cd417   snyk/broker:container-registry-agent   "/home/node/docker-e…"   7 minutes ago   Up 7 minutes           0.0.0.0:8001->8001/tcp                                                     cr_broker
+774ac09687f0   snyk/broker:gitlab                     "broker --verbose"       8 minutes ago   Up 7 minutes           0.0.0.0:8000->8000/tcp                                                     broker
+22fbcc87fa90   yrzr/gitlab-ce-arm64v8                 "/assets/wrapper"        3 hours ago     Up 3 hours (healthy)   0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, 22/tcp, 0.0.0.0:5555->5555/tcp   gitlab
+```
+
 
 ## 0. Prerequisite
 
@@ -278,6 +292,7 @@ echo Kh4FXXXXXhcQsYsCAFy > cr_broker_token
 ```
 
 Run the `3.create_cra.sh`.
+
 This scripts will create a sample docker image and push to Gitlab container registry.
 Then creates 2 containers (Broker and CRA).
 
@@ -376,6 +391,90 @@ docker run -d \
 
 Once broker and CRA are up, you should be able to retrieve container images from Snyk UI.
 
+
+## 6. Fire up Code Agent
+
+Now, we are going to run code agent for code scan.
+
+**NOTE: Before you start this step, make sure you contacted Snyk's SE or support to enable the snykCodeAccess feature enabled!**
+
+You need Snyk API Token for this.
+You can get it from "Account settings" in Snyk UI.
+
+<img src="./asset/snyk_api_token.png" />
+
+* Copy the token and save it in `snyk_api_token` like below:
+
+```
+echo eabdc0e8-xxxx-xxxx-xxxx-2a0ffbf936ec > snyk_api_token
+```
+
+Run the `4.create_code_agent.sh`.
+
+This scripts will create code agent container. 
+
+Below is the contents of `4.create_code_agent.sh`.
+
+```
+#!/bin/bash
+
+set -x
+
+### =================================
+### Config
+### =================================
+
+DOCKER_NETWORK=mySnykBrokerNetwork
+
+GITLAB_HOST=gitlab.test
+GITLAB_TOKEN=$(cat gitlab_token)
+SNYK_TOKEN=$(cat snyk_api_token)
+
+CODE_AGENT_CONTAINER_NAME=code_agent
+CODE_AGENT_PORT=3000
+
+### =================================
+### Preparation
+### =================================
+
+GROUP_ID=$(curl -s --header "Authorization: Bearer ${GITLAB_TOKEN}" -X GET "https://${GITLAB_HOST}/api/v4/groups" | jq -r '.[0].path')
+
+### =================================
+### Push sample code
+###  - this will push to default repo
+### =================================
+
+pushd goof
+
+git init --initial-branch=main
+git remote add origin https://${GITLAB_HOST}/${GROUP_ID}/Monitoring.git
+git add .
+git commit -m "Initial commit"
+git push -u origin main
+
+popd
+
+### =================================
+### Run Code Agent
+### =================================
+
+docker run -d \
+	--restart=always \
+	--name ${CODE_AGENT_CONTAINER_NAME} \
+	--hostname ${CODE_AGENT_CONTAINER_NAME} \
+	--network ${DOCKER_NETWORK} \
+	-p ${CODE_AGENT_PORT}:${CODE_AGENT_PORT} \
+	-e SNYK_TOKEN=${SNYK_TOKEN} \
+	-e PORT=${CODE_AGENT_PORT} \
+	-e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+	snyk/code-agent
+```
+
+Once code broker is up, you should be able to scan the code.
+
+
+
+**That's it!**
 
 
 ----

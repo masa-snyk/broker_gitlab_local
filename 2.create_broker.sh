@@ -23,6 +23,9 @@ BROKER_HOST=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
 BROKER_URL=http://${BROKER_HOST}:${BROKER_PUBLISH_PORT}
 ACCEPT_JSON_PATH=${PWD}
 
+CODE_AGENT_CONTAINER_NAME=code_agent
+CODE_AGENT_PORT=3000
+
 ### ==========================
 ### Create container for Broker
 ### =======================
@@ -39,6 +42,7 @@ docker run -d \
 	-e GITLAB=${GITLAB_HOST} \
 	-e PORT=${BROKER_PUBLISH_PORT} \
 	-e BROKER_CLIENT_URL=${BROKER_URL} \
+	-e GIT_CLIENT_URL=http://${CODE_AGENT_CONTAINER_NAME}:${CODE_AGENT_PORT} \
 	-e ACCEPT=/private/accept.json \
 	-e NODE_TLS_REJECT_UNAUTHORIZED=0 \
 	snyk/broker:gitlab 
