@@ -180,7 +180,7 @@ You need 2 scopes:
 
 Then, preference -> Access Token -> Generate new like below:
 
-<img src="./asset/access_token.png">
+<img src="./asset/access_token.png" />
 
 
 
@@ -192,20 +192,20 @@ You need two kind of tokens.
 
 	* you can get broker token from Snyk UI integration page
 
-<img src="./asset/broker_token.png">
+		<img src="./asset/broker_token.png" />
 
 	* Copy the token and save it in `broker_token` like below:
 
-	 ```
-	 echo 350a39e2-3e4a-491a-a7ff-eb51ca9e2442 > broker_token
-	 ```
+		```
+		echo 350a39e2-3e4a-491a-a7ff-eb51ca9e2442 > broker_token
+		```
 
 2. GitLab access token (To auth Broker <-> GitLab)
    * This is the token generated in Step 3.
 	 * Copy the token and save it in `gitlab_token` like below:
 
 		```
-		echo Kh4FS5Xs7ihcQsYsCAFy > gitlab_token
+		echo Kh4FSXXXXXhcQsYsCAFy > gitlab_token
 		```
 
 Run the `2.create_broker.sh`.
@@ -269,7 +269,7 @@ Now, we are going to fire up broker and container registry agent (CRA) for conta
 You need nother broker token for Gitlab containter integration.
 You can git the token from Snyk UI integration page.
 
-<img src="./asset/broker_token_cr.png">
+<img src="./asset/broker_token_cr.png" />
 
 * Copy the token and save it in `cr_broker_token` like below:
 
