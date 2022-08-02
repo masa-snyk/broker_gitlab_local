@@ -189,6 +189,7 @@ Creating non-root user is optional.
 Once you login, go to user menu on upper right corner.
 You need 2 scopes:
 * api - For code Broker integration
+* read_repositoy - For Code agent to read your repo
 * read_registry - For Container scan
 * write_registry - For this demo only (Not necessary for scan)
 
