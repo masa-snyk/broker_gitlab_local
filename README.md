@@ -188,16 +188,17 @@ Creating non-root user is optional.
 ## 3. Create access token
 
 Once you login, go to user menu on upper right corner.
-You need 2 scopes:
-* api - For code Broker integration
+You need 4 scopes:
+* api - For Broker integration
 * read_repositoy - For Code agent to read your repo
 * read_registry - For Container scan
 * write_registry - For this demo only (Not necessary for scan)
 
 Then, preference -> Access Token -> Generate new like below:
 
-<img src="./asset/access_token.png" />
+![access_token](./asset/access_token.png)
 
+Copy the value of token for next step.
 
 
 ## 4. Fire up Broker with access token & broker token
@@ -208,7 +209,7 @@ You need two kind of tokens.
 
 	* you can get broker token from Snyk UI integration page
 
-		<img src="./asset/broker_token.png" />
+		![broker token](./asset/broker_token.png)
 
 	* Copy the token and save it in `broker_token` like below:
 
@@ -285,7 +286,7 @@ Now, we are going to fire up broker and container registry agent (CRA) for conta
 You need nother broker token for Gitlab containter integration.
 You can git the token from Snyk UI integration page.
 
-<img src="./asset/broker_token_cr.png" />
+![broker token for cra](./asset/broker_token_cr.png)
 
 * Copy the token and save it in `cr_broker_token` like below:
 
@@ -403,7 +404,7 @@ Now, we are going to run code agent for code scan.
 You need Snyk API Token for this.
 You can get it from "Account settings" in Snyk UI.
 
-<img src="./asset/snyk_api_token.png" />
+![snyk api token](./asset/snyk_api_token.png)
 
 * Copy the token and save it in `snyk_api_token` like below:
 
