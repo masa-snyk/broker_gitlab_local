@@ -188,6 +188,11 @@ Creating non-root user is optional.
 ## 3. Create access token
 
 Once you login, go to user menu on upper right corner.
+
+Then go to "Access Tokens". 
+
+![How to get to access token](./asset/how_to_get_access_token.png)
+
 You need 4 scopes:
 * api - For Broker integration
 * read_repositoy - For Code agent to read your repo
@@ -198,13 +203,17 @@ Then, preference -> Access Token -> Generate new like below:
 
 ![access_token](./asset/access_token.png)
 
-Copy the value of token for next step.
+Copy the token and save it in `gitlab_token` like below:
 
+```
+echo Kh4FSXXXXXhcQsYsCAFy > gitlab_token
+```
 
 ## 4. Fire up Broker with access token & broker token
 
-You need two kind of tokens. 
-1. Broker token (To auth Broker <-> Snyk Platform)
+You need Broker token for broker to interact with Snyk platform.
+
+* Broker token (To auth Broker <-> Snyk Platform)
 	* [Generate credentials for Snyk Broker](https://docs.snyk.io/features/snyk-broker/set-up-snyk-broker/prepare-snyk-broker-for-deployment#generate-credentials-in-the-target-application-for-snyk-broker)
 
 	* you can get broker token from Snyk UI integration page
@@ -215,14 +224,6 @@ You need two kind of tokens.
 
 		```
 		echo 350a39e2-3e4a-491a-a7ff-eb51ca9e2442 > broker_token
-		```
-
-2. GitLab access token (To auth Broker <-> GitLab)
-   * This is the token generated in Step 3.
-	 * Copy the token and save it in `gitlab_token` like below:
-
-		```
-		echo Kh4FSXXXXXhcQsYsCAFy > gitlab_token
 		```
 
 Run the `2.create_broker.sh`.
@@ -283,7 +284,7 @@ Once broker fires up, you should be able to retrieve local GitLab repositories f
 
 Now, we are going to fire up broker and container registry agent (CRA) for container scan.
 
-You need nother broker token for Gitlab containter integration.
+You need another broker token for Gitlab containter integration.
 You can git the token from Snyk UI integration page.
 
 ![broker token for cra](./asset/broker_token_cr.png)
@@ -473,8 +474,9 @@ docker run -d \
 	snyk/code-agent
 ```
 
-Once code broker is up, you should be able to scan the code.
+Once code broker is up, you should be able to scan the code from re-importing your repository.
 
+![code scan](./asset/code_scan.png)
 
 
 **That's it!**
