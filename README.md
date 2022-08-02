@@ -1,7 +1,8 @@
-# Broker demo for gitlab local
+# Broker demo for locall gitlab instance
 
-Snyk Broker set up for locally running GitLab. 
-This demo locally runs GitLab container. 
+This demo locally runs GitLab container, create Snyk brokers to allow scanning by Snyk.
+
+This demo sets up locally running GitLab instance as docker container. 
 
 This demo also sets up Snyk brokers for OSS scan and container scan.
 	
@@ -520,4 +521,5 @@ docker exec -u root gitlab gitlab-ctl reconfigure
 ## ToDos
 
 * [x][2022/08/02] Broker for Container registry and agent
-* [_] Code agent
+* [x][2022/08/02] Code agent
+* [] Try not to use `-e NODE_TLS_REJECT_UNAUTHORIZED=0` option for snyk containers...
