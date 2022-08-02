@@ -1,8 +1,21 @@
 # Broker demo for gitlab local
 
 Snyk Broker set up for locally running GitLab. 
-This demo locally runs 2 containers, GitLab and Snyk Broker.
+This demo locally runs GitLab container. 
+
+This demo also sets up Snyk brokers for OSS scan and container scan.
+
+At end of demo, you will have following containers:
+
+* For OSS scan
+	* 1 broker
+
+* For Container scan
+	* 1 broker
+	* 1 container registry agent
+
 Snyk broker proxies the connection between local GitLab and Snyk platform.
+Container registry agent interacts with GitLab container registy.
 
 ## 0. Prerequisite
 
@@ -73,6 +86,8 @@ For this demo, the hostname of GitLab is `gitlab.test`. You can freely change th
 
 ***Note***: **For some reason, officail GitLab image (`gitlab/gitlab-ee:latest`) didn't work with my M1 Mac, so I used GitLab image built for M1 specifically (`yrzr/gitlab-ce-arm64v8`).**
 
+***Note***: If you use MacOS Montrey, Airplay uses port 5000 which is default port for GitLab Container Registry... So need to portforward to something like 5555...
+
 Run following or execute `1.create_containers.sh`.
 
 ```bash
@@ -80,28 +95,39 @@ Run following or execute `1.create_containers.sh`.
 
 set -x
 
-### =======================
+### ==========================
 ### Config
+### ==========================
 
 DOCKER_NETWORK=mySnykBrokerNetwork
 
 GITLAB_CONTAINER_NAME=gitlab
 GITLAB_HOME=${PWD}/volume
-GITLAB_HOST=gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
+GITLAB_HOST=gitlab.test
+# here's little hack. Mack OS uses port 5000 for Air-play (which is the default GitLab registry's port.
+GITLAB_REGISTRY_PORT=5555
 
-### Prerequites
+### ==========================
+### Preparation
+### ==========================
+
 SSL_PATH=${GITLAB_HOME}/config/ssl
 
 mkdir -p ${SSL_PATH}
 chmod 755 ${SSL_PATH}
 
+# Get root CA certificate
+cp "$(mkcert -CAROOT)/rootCA.pem" ${SSL_PATH}/rootCA.pem
+
+# Generate certs for GitLab instance
 mkcert \
 	-cert-file ${SSL_PATH}/${GITLAB_HOST}.crt \
 	-key-file ${SSL_PATH}/${GITLAB_HOST}.key \
 	${GITLAB_HOST}
 
-### ==========================
+### ===========================
 ### Create container for GitLab
+### ===========================
 
 mkdir -p ${GITLAB_HOME}
 
@@ -112,10 +138,11 @@ docker run -d \
 	--network ${DOCKER_NETWORK} \
 	-p 443:443 \
 	-p 80:80 \
+	-p ${GITLAB_REGISTRY_PORT}:${GITLAB_REGISTRY_PORT} \
 	-v ${GITLAB_HOME}/config:/etc/gitlab \
 	-v ${GITLAB_HOME}/logs:/var/log/gitlab \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
-	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false;" \
+	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true" \
 	yrzr/gitlab-ce-arm64v8
 ```
 
@@ -149,24 +176,25 @@ Once you login, go to user menu on upper right corner.
 You need 2 scopes:
 * api - For code Broker integration
 * read_registry - For Container scan
+* write_registry - For this demo only (Not necessary for scan)
 
 Then, preference -> Access Token -> Generate new like below:
 
 <img src="./asset/access_token.png">
 
-Copy the token and save it in `gitlab_token` like below:
 
-```
-echo Kh4FS5Xs7ihcQsYsCAFy > gitlab_token
-```
 
 ## 4. Fire up Broker with access token & broker token
 
 You need two kind of tokens. 
 1. Broker token (To auth Broker <-> Snyk Platform)
-   * [Generate credentials for Snyk Broker](https://docs.snyk.io/features/snyk-broker/set-up-snyk-broker/prepare-snyk-broker-for-deployment#generate-credentials-in-the-target-application-for-snyk-broker)
+	* [Generate credentials for Snyk Broker](https://docs.snyk.io/features/snyk-broker/set-up-snyk-broker/prepare-snyk-broker-for-deployment#generate-credentials-in-the-target-application-for-snyk-broker)
 
-	 Copy the token and save it in `broker_token` like below:
+	* you can get broker token from Snyk UI integration page
+
+<img src="./asset/broker_token.png">
+
+	* Copy the token and save it in `broker_token` like below:
 
 	 ```
 	 echo 350a39e2-3e4a-491a-a7ff-eb51ca9e2442 > broker_token
@@ -174,6 +202,11 @@ You need two kind of tokens.
 
 2. GitLab access token (To auth Broker <-> GitLab)
    * This is the token generated in Step 3.
+	 * Copy the token and save it in `gitlab_token` like below:
+
+		```
+		echo Kh4FS5Xs7ihcQsYsCAFy > gitlab_token
+		```
 
 Run the `2.create_broker.sh`.
 
@@ -186,16 +219,19 @@ set -x
 
 ### =======================
 ### Config
+### =======================
 
 DOCKER_NETWORK=mySnykBrokerNetwork
 
 GITLAB_HOST=gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
-GITLAB_TOKEN=y9TnMfa7v65Qcvk8mZum # Replace this with actual Gitlab token
+GITLAB_TOKEN=$(cat gitlab_token) # Replace this with actual Gitlab token
 
-BROKER_CONTAINER_NAME=broker
 BROKER_TOKEN=$(cat broker_token) # Replace this with actual Broker token
+BROKER_CONTAINER_NAME=broker
 BROKER_PUBLISH_PORT=8000
 
+### =======================
+### Preparation
 ### =======================
 
 BROKER_HOST=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
@@ -204,10 +240,12 @@ ACCEPT_JSON_PATH=${PWD}
 
 ### ==========================
 ### Create container for Broker
+### =======================
 
 docker run -d \
 	--restart=always \
 	--name ${BROKER_CONTAINER_NAME} \
+	--hostname ${BROKER_CONTAINER_NAME} \
 	--network ${DOCKER_NETWORK} \
 	-p ${BROKER_PUBLISH_PORT}:${BROKER_PUBLISH_PORT} \
 	-v ${ACCEPT_JSON_PATH}:/private \
@@ -218,10 +256,127 @@ docker run -d \
 	-e BROKER_CLIENT_URL=${BROKER_URL} \
 	-e ACCEPT=/private/accept.json \
 	-e NODE_TLS_REJECT_UNAUTHORIZED=0 \
-	snyk/broker:gitlab 
+	snyk/broker:gitlab
 ```
 
 Once broker fires up, you should be able to retrieve local GitLab repositories from Snyk UI.
+
+
+## 5. Fire up Broker with access token & broker token
+
+Now, we are going to fire up broker and container registry agent (CRA) for container scan.
+
+You need nother broker token for Gitlab containter integration.
+You can git the token from Snyk UI integration page.
+
+<img src="./asset/broker_token_cr.png">
+
+* Copy the token and save it in `cr_broker_token` like below:
+
+```
+echo Kh4FXXXXXhcQsYsCAFy > cr_broker_token
+```
+
+Run the `3.create_cra.sh`.
+This scripts will create a sample docker image and push to Gitlab container registry.
+Then creates 2 containers (Broker and CRA).
+
+Below is the contents of `3.create_cra.sh`.
+
+```
+#!/bin/bash
+
+set -x
+
+### =================================
+### Config
+### =================================
+
+DOCKER_NETWORK=mySnykBrokerNetwork
+
+GITLAB_HOST=gitlab.test
+GITLAB_USER=root
+GITLAB_TOKEN=$(cat gitlab_token)
+GITLAB_CONTAINER_REPO=monitoring
+GITLAB_REGISTRY_PORT=5555
+TAG=latest
+BROKER_TOKEN=$(cat cr_broker_token)
+BROKER_PUBLISH_PORT=8001
+BROKER_CONTAINER_NAME=cr_broker
+
+CRA_CONTAINER_NAME=cra
+CRA_AGENT_PORT=8081
+
+### =================================
+### Preparation
+### =================================
+
+GITLAB_PASSWORD=$(docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password | cut -s -w -f 2 | tr -d '\r')
+GITLAB_REGISTRY_HOST=${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}
+GROUP_ID=$(curl -s --header "Authorization: Bearer ${GITLAB_TOKEN}" -X GET "https://${GITLAB_HOST}/api/v4/groups" | jq -r '.[0].path')
+
+BROKER_HOST=$(ifconfig en0 | awk '$1 == "inet" {print $2}')
+BROKER_URL=http://${BROKER_HOST}:${BROKER_PUBLISH_PORT}
+
+CR_AGENT_URL=http://$(ifconfig en0 | awk '$1 == "inet" {print $2}'):${CRA_AGENT_PORT}
+CR_TYPE=gitlab-cr
+CR_BASE=${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}
+CR_USERNAME=${GITLAB_USER}
+CR_PASSWORD=${GITLAB_PASSWORD}
+
+#CA_PATH=${PWD}/volume/config/ssl
+#CA_CERT=rootCA.pem
+
+### =================================
+### Docker build
+###  - this will push to default repo
+### =================================
+
+echo ${GITLAB_PASSWORD} | docker login -u ${GITLAB_USER} --password-stdin ${GITLAB_REGISTRY_HOST}
+docker build -t ${GITLAB_REGISTRY_HOST}/${GROUP_ID}/${GITLAB_CONTAINER_REPO}:${TAG} .
+docker push ${GITLAB_REGISTRY_HOST}/${GROUP_ID}/${GITLAB_CONTAINER_REPO}:${TAG}
+
+### =================================
+### Run Broker client for container registry
+### =================================
+
+docker run -d \
+	--restart=always \
+	--name ${BROKER_CONTAINER_NAME} \
+	--hostname ${BROKER_CONTAINER_NAME} \
+	--network ${DOCKER_NETWORK} \
+	-p ${BROKER_PUBLISH_PORT}:${BROKER_PUBLISH_PORT} \
+	-e BROKER_TOKEN=${BROKER_TOKEN} \
+	-e BROKER_CLIENT_URL=${BROKER_URL} \
+	-e CR_AGENT_URL=${CR_AGENT_URL} \
+	-e CR_TYPE=${CR_TYPE} \
+	-e CR_BASE=${CR_BASE} \
+	-e CR_USERNAME=${CR_USERNAME} \
+	-e CR_PASSWORD=${CR_PASSWORD} \
+	-e BROKER_CLIENT_VALIDATION_URL=${CR_AGENT_URL}/systemcheck \
+	-e PORT=${BROKER_PUBLISH_PORT} \
+	-e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+	snyk/broker:container-registry-agent
+
+### =================================
+### Run Container Registry Agent
+### =================================
+
+docker run -d \
+	--restart=always \
+	--name ${CRA_CONTAINER_NAME} \
+	--hostname ${CRA_CONTAINER_NAME} \
+	--network ${DOCKER_NETWORK} \
+	-p ${CRA_AGENT_PORT}:${CRA_AGENT_PORT} \
+	-e SNYK_PORT=${CRA_AGENT_PORT} \
+	-e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+	snyk/container-registry-agent:latest
+
+```
+
+Once broker and CRA are up, you should be able to retrieve container images from Snyk UI.
+
+
 
 ----
 

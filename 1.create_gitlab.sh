@@ -2,32 +2,41 @@
 
 set -x
 
-### =======================
+### ==========================
 ### Config
+### ==========================
 
 DOCKER_NETWORK=mySnykBrokerNetwork
 
 GITLAB_CONTAINER_NAME=gitlab
 GITLAB_HOME=${PWD}/volume
-GITLAB_HOST=gitlab.test  # this name needs to be in SANS of cert. cert name must be the same.
+GITLAB_HOST=gitlab.test  
+# here's little hack. Mack OS uses port 5000 for Air-play (which is the default GitLab registry's port.
+GITLAB_REGISTRY_PORT=5555 
 
-### Prerequites
+### ==========================
+### Preparation
+### ==========================
 
 SSL_PATH=${GITLAB_HOME}/config/ssl
 
 mkdir -p ${SSL_PATH}
 chmod 755 ${SSL_PATH}
 
+# Get root CA certificate
+cp "$(mkcert -CAROOT)/rootCA.pem" ${SSL_PATH}/rootCA.pem
+
+# Generate certs for GitLab instance
 mkcert \
 	-cert-file ${SSL_PATH}/${GITLAB_HOST}.crt \
 	-key-file ${SSL_PATH}/${GITLAB_HOST}.key \
 	${GITLAB_HOST} 
 
-### ==========================
+### ===========================
 ### Create container for GitLab
+### ===========================
 
 mkdir -p ${GITLAB_HOME}
-
 
 docker run -d \
 	--restart always \
@@ -36,8 +45,9 @@ docker run -d \
 	--network ${DOCKER_NETWORK} \
 	-p 443:443 \
 	-p 80:80 \
+	-p ${GITLAB_REGISTRY_PORT}:${GITLAB_REGISTRY_PORT} \
 	-v ${GITLAB_HOME}/config:/etc/gitlab \
 	-v ${GITLAB_HOME}/logs:/var/log/gitlab \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
-	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true" \
+	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true" \
 	yrzr/gitlab-ce-arm64v8
