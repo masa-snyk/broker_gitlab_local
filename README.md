@@ -262,7 +262,7 @@ docker run -d \
 Once broker fires up, you should be able to retrieve local GitLab repositories from Snyk UI.
 
 
-## 5. Fire up Broker with access token & broker token
+## 5. Fire up Broker and Container registry agent for Container scan
 
 Now, we are going to fire up broker and container registry agent (CRA) for container scan.
 
