@@ -8,3 +8,4 @@ docker rm -f cra
 docker rm -f cr_broker
 docker rm -f code_agent
  
+rm -rf ./goof/.git

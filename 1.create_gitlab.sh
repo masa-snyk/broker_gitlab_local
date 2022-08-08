@@ -13,10 +13,13 @@ GITLAB_HOME=${PWD}/volume
 GITLAB_HOST=gitlab.test  
 # here's little hack. Mack OS uses port 5000 for Air-play (which is the default GitLab registry's port.
 GITLAB_REGISTRY_PORT=5555 
+GITLAB_ROOT_PASSWORD=Passw0rd
 
 ### ==========================
 ### Preparation
 ### ==========================
+
+mkdir -p ${GITLAB_HOME}
 
 SSL_PATH=${GITLAB_HOME}/config/ssl
 
@@ -36,8 +39,6 @@ mkcert \
 ### Create container for GitLab
 ### ===========================
 
-mkdir -p ${GITLAB_HOME}
-
 docker run -d \
 	--restart always \
 	--name ${GITLAB_CONTAINER_NAME} \
@@ -49,5 +50,5 @@ docker run -d \
 	-v ${GITLAB_HOME}/config:/etc/gitlab \
 	-v ${GITLAB_HOME}/logs:/var/log/gitlab \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
-	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true" \
+	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true; gitlab_rails['initial_root_password'] = '$GITLAB_ROOT_PASSWORD'" \
 	yrzr/gitlab-ce-arm64v8

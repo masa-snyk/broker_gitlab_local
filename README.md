@@ -169,29 +169,22 @@ docker logs -f gitlab
 
 ***Note***: For the first time you create GitLab container, it will also initialise databases and various sub-systems So takes time... (~10min)
 
-## 2. Obtain initial root password
 
-Once GitLab is up, you can retrieve initial root password.
-```
-docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
-```
 
-Log in to GitLab with `root` as username and the password obtained by previous step:
+## 2. Create access token
+
+
+Log in to GitLab with `root` as username and the default root password for this demo is `Passw0rd`.
 
 ```
 open https://gitlab.test
 ```
 
-Then create an access token. 
-Creating non-root user is optional.
-
-## 3. Create access token
-
 Once you login, go to user menu on upper right corner.
 
-Then go to "Access Tokens". 
+Then create an access token. 
 
-![How to get to access token](./asset/how_to_get_access_token.png)
+![How to get access token](./asset/how_to_get_access_token.png)
 
 You need 4 scopes:
 * api - For Broker integration

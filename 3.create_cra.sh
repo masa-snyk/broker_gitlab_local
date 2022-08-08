@@ -10,6 +10,7 @@ DOCKER_NETWORK=mySnykBrokerNetwork
 
 GITLAB_HOST=gitlab.test
 GITLAB_USER=root
+GITLAB_PASSWORD=Passw0rd
 GITLAB_TOKEN=$(cat gitlab_token)
 GITLAB_CONTAINER_REPO=monitoring
 GITLAB_REGISTRY_PORT=5555
@@ -25,7 +26,6 @@ CRA_AGENT_PORT=8081
 ### Preparation
 ### =================================
 
-GITLAB_PASSWORD=$(docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password | cut -s -w -f 2 | tr -d '\r') 
 GITLAB_REGISTRY_HOST=${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}
 GROUP_ID=$(curl -s --header "Authorization: Bearer ${GITLAB_TOKEN}" -X GET "https://${GITLAB_HOST}/api/v4/groups" | jq -r '.[0].path')
 
@@ -36,7 +36,8 @@ CR_AGENT_URL=http://$(ifconfig en0 | awk '$1 == "inet" {print $2}'):${CRA_AGENT_
 CR_TYPE=gitlab-cr
 CR_BASE=${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}
 CR_USERNAME=${GITLAB_USER}
-CR_PASSWORD=${GITLAB_PASSWORD}
+# CR_PASSWORD=${GITLAB_PASSWORD}
+CR_PASSWORD=$(cat gitlab_token)
 
 #CA_PATH=${PWD}/volume/config/ssl
 #CA_CERT=rootCA.pem
