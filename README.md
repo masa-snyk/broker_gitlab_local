@@ -103,7 +103,9 @@ For this demo, the hostname of GitLab is `gitlab.test`. You can freely change th
 
 ***Note***: If you use MacOS Montrey, Airplay uses port 5000 which is default port for GitLab Container Registry... So need to portforward to something like 5555...
 
-Run following or execute `1.create_containers.sh`.
+Execute `1.create_containers.sh`.
+
+Below is the contents of the script.
 
 ```bash
 #!/bin/bash
@@ -121,10 +123,13 @@ GITLAB_HOME=${PWD}/volume
 GITLAB_HOST=gitlab.test
 # here's little hack. Mack OS uses port 5000 for Air-play (which is the default GitLab registry's port.
 GITLAB_REGISTRY_PORT=5555
+GITLAB_ROOT_PASSWORD=Passw0rd
 
 ### ==========================
 ### Preparation
 ### ==========================
+
+mkdir -p ${GITLAB_HOME}
 
 SSL_PATH=${GITLAB_HOME}/config/ssl
 
@@ -144,8 +149,6 @@ mkcert \
 ### Create container for GitLab
 ### ===========================
 
-mkdir -p ${GITLAB_HOME}
-
 docker run -d \
 	--restart always \
 	--name ${GITLAB_CONTAINER_NAME} \
@@ -157,7 +160,7 @@ docker run -d \
 	-v ${GITLAB_HOME}/config:/etc/gitlab \
 	-v ${GITLAB_HOME}/logs:/var/log/gitlab \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
-	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true" \
+	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true; gitlab_rails['initial_root_password'] = '$GITLAB_ROOT_PASSWORD'" \
 	yrzr/gitlab-ce-arm64v8
 ```
 
@@ -202,7 +205,7 @@ Copy the token and save it in `gitlab_token` like below:
 echo Kh4FSXXXXXhcQsYsCAFy > gitlab_token
 ```
 
-## 4. Fire up Broker with access token & broker token
+## 3. Fire up Broker with access token & broker token
 
 You need Broker token for broker to interact with Snyk platform.
 
@@ -273,7 +276,7 @@ docker run -d \
 Once broker fires up, you should be able to retrieve local GitLab repositories from Snyk UI.
 
 
-## 5. Fire up Broker and Container registry agent for Container scan
+## 4. Fire up Broker and Container registry agent for Container scan
 
 Now, we are going to fire up broker and container registry agent (CRA) for container scan.
 
@@ -308,6 +311,7 @@ DOCKER_NETWORK=mySnykBrokerNetwork
 
 GITLAB_HOST=gitlab.test
 GITLAB_USER=root
+GITLAB_PASSWORD=Passw0rd
 GITLAB_TOKEN=$(cat gitlab_token)
 GITLAB_CONTAINER_REPO=monitoring
 GITLAB_REGISTRY_PORT=5555
@@ -323,7 +327,6 @@ CRA_AGENT_PORT=8081
 ### Preparation
 ### =================================
 
-GITLAB_PASSWORD=$(docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password | cut -s -w -f 2 | tr -d '\r')
 GITLAB_REGISTRY_HOST=${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}
 GROUP_ID=$(curl -s --header "Authorization: Bearer ${GITLAB_TOKEN}" -X GET "https://${GITLAB_HOST}/api/v4/groups" | jq -r '.[0].path')
 
@@ -334,7 +337,8 @@ CR_AGENT_URL=http://$(ifconfig en0 | awk '$1 == "inet" {print $2}'):${CRA_AGENT_
 CR_TYPE=gitlab-cr
 CR_BASE=${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}
 CR_USERNAME=${GITLAB_USER}
-CR_PASSWORD=${GITLAB_PASSWORD}
+# CR_PASSWORD=${GITLAB_PASSWORD}
+CR_PASSWORD=$(cat gitlab_token)
 
 #CA_PATH=${PWD}/volume/config/ssl
 #CA_CERT=rootCA.pem
@@ -383,13 +387,12 @@ docker run -d \
 	-e SNYK_PORT=${CRA_AGENT_PORT} \
 	-e NODE_TLS_REJECT_UNAUTHORIZED=0 \
 	snyk/container-registry-agent:latest
-
 ```
 
 Once broker and CRA are up, you should be able to retrieve container images from Snyk UI.
 
 
-## 6. Fire up Code Agent
+## 5. Fire up Code Agent
 
 Now, we are going to run code agent for code scan.
 
