@@ -16,6 +16,9 @@ This demo also sets up Snyk brokers for OSS scan and container scan.
 * For Code scan
 	* 1 code agent
 
+
+![Broker composition](./asset/Broker_GitLab_Local.png)
+
 Snyk broker proxies the connection between local GitLab and Snyk platform.
 Container registry agent interacts with GitLab container registy.
 
