@@ -19,6 +19,12 @@ GITLAB_ROOT_PASSWORD=Passw0rd
 ### Preparation
 ### ==========================
 
+if [[ $(uname -m) == 'arm64' ]]; then
+  GITLAB_IMAGE=yrzr/gitlab-ce-arm64v8
+else
+  GITLAB_IMAGE=gitlab/gitlab-ee:latest
+fi
+
 mkdir -p ${GITLAB_HOME}
 
 SSL_PATH=${GITLAB_HOME}/config/ssl
@@ -51,4 +57,4 @@ docker run -d \
 	-v ${GITLAB_HOME}/logs:/var/log/gitlab \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
 	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true; gitlab_rails['initial_root_password'] = '$GITLAB_ROOT_PASSWORD'" \
-	yrzr/gitlab-ce-arm64v8
+	${GITLAB_IMAGE} 
