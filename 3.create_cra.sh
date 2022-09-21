@@ -48,8 +48,13 @@ CR_PASSWORD=$(cat gitlab_token)
 ### =================================
 
 echo ${GITLAB_PASSWORD} | docker login -u ${GITLAB_USER} --password-stdin ${GITLAB_REGISTRY_HOST}
+
+pushd goof
+
 docker build -t ${GITLAB_REGISTRY_HOST}/${GROUP_ID}/${GITLAB_CONTAINER_REPO}:${TAG} . 
 docker push ${GITLAB_REGISTRY_HOST}/${GROUP_ID}/${GITLAB_CONTAINER_REPO}:${TAG}
+
+popd goof
 
 ### =================================
 ### Run Broker client for container registry
