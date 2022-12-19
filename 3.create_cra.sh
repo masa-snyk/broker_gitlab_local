@@ -54,7 +54,7 @@ pushd goof
 docker build -t ${GITLAB_REGISTRY_HOST}/${GROUP_ID}/${GITLAB_CONTAINER_REPO}:${TAG} . 
 docker push ${GITLAB_REGISTRY_HOST}/${GROUP_ID}/${GITLAB_CONTAINER_REPO}:${TAG}
 
-popd goof
+popd 
 
 ### =================================
 ### Run Broker client for container registry

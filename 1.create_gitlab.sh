@@ -58,3 +58,5 @@ docker run -d \
 	-v ${GITLAB_HOME}/data:/var/opt/gitlab \
 	-e GITLAB_OMNIBUS_CONFIG="external_url 'https://${GITLAB_HOST}'; letsencrypt['enabled'] = false; registry_external_url 'https://${GITLAB_HOST}:${GITLAB_REGISTRY_PORT}'; nginx['redirect_http_to_https'] = true; registry_nginx['redirect_http_to_https'] = true; gitlab_rails['initial_root_password'] = '$GITLAB_ROOT_PASSWORD'" \
 	${GITLAB_IMAGE} 
+
+echo GitLab Host: ${GITLAB_HOST}

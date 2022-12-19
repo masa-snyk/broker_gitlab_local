@@ -64,3 +64,28 @@ docker run -d \
 	-e ACCEPT=/private/accept.json \
 	-e NODE_TLS_REJECT_UNAUTHORIZED=0 \
 	snyk/broker:gitlab 
+
+### =========================
+### For Broker HA (Optional)
+### ========================
+
+# BROKER_CONTAINER_NAME2=${BROKER_CONTAINER_NAME}2
+# BROKER_PUBLISH_PORT2=18000
+# BROKER_URL2=http://${BROKER_HOST}:${BROKER_PUBLISH_PORT2}
+# 
+# docker run -d \
+# 	--restart=always \
+# 	--name ${BROKER_CONTAINER_NAME2} \
+# 	--hostname ${BROKER_CONTAINER_NAME2} \
+# 	--network ${DOCKER_NETWORK} \
+# 	-p ${BROKER_PUBLISH_PORT2}:${BROKER_PUBLISH_PORT} \
+# 	-v ${ACCEPT_JSON_PATH}:/private \
+# 	-e BROKER_TOKEN=${BROKER_TOKEN} \
+# 	-e GITLAB_TOKEN=${GITLAB_TOKEN} \
+# 	-e GITLAB=${GITLAB_HOST} \
+# 	-e PORT=${BROKER_PUBLISH_PORT2} \
+# 	-e BROKER_CLIENT_URL=${BROKER_URL} \
+# 	-e GIT_CLIENT_URL=http://${CODE_AGENT_CONTAINER_NAME}:${CODE_AGENT_PORT} \
+# 	-e ACCEPT=/private/accept.json \
+# 	-e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+# 	snyk/broker:gitlab 
