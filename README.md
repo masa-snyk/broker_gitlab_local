@@ -13,12 +13,10 @@ This demo also sets up Snyk brokers for OSS scan and container scan.
 	* 1 broker
 	* 1 container registry agent
 
-<span style="color: red; ">
 <b>
 2023/01/19 Update: With new Broker code cloning feature, you don't need Code agent anymore. 
 To enable code cloning feature, Snyk SE will help enable it from Admin panel. Please contact. 
 </b>
-</span>
 
 * (For Code scan)
 	* (1 code agent)
