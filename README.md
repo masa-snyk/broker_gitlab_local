@@ -13,8 +13,11 @@ This demo also sets up Snyk brokers for OSS scan and container scan.
 	* 1 broker
 	* 1 container registry agent
 
-* For Code scan
-	* 1 code agent
+**2022/01/19 Update: With new Broker code cloning feature, you don't need Code agent anymore. **
+**To enable code cloning feature, Snyk SE will help enable it from Admin panel. Please contact. **
+
+* (For Code scan)
+	* (1 code agent)
 
 
 ![Broker composition](./asset/Broker_GitLab_Local.png)
@@ -524,4 +527,5 @@ docker exec -u root gitlab gitlab-ctl reconfigure
 
 * [x][2022/08/02] Broker for Container registry and agent
 * [x][2022/08/02] Code agent
+* [x][2023/01/19] snykCodeBrokerCloning
 * [] Try not to use `-e NODE_TLS_REJECT_UNAUTHORIZED=0` option for snyk containers...
